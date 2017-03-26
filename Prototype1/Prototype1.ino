@@ -26,12 +26,11 @@ Adafruit_ILI9340 tft = Adafruit_ILI9340(_cs, _dc, _rst);
 //Trellis
 Adafruit_Trellis matrix0 = Adafruit_Trellis();
 Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
-char keymap[] = {'7','8','9','/',
-                 '4','5','6','x',
-                 '1','2','3','-',
-                 '0','.','=','+'};
+char* keymap[] = {"7","8","9","/",
+                 "4","5","6","x",
+                 "1","2","3","-",
+                 "0",".","=","+"};
 String expression = "5";
-boolean redraw;
 
 void setup() {
     Serial.begin(9600);
@@ -42,7 +41,8 @@ void setup() {
     tft.setRotation(1);
     tft.setFont(&FreeMono24pt7b);
     tft.fillScreen(ILI9340_BLACK);
-    testText();
+    tft.setCursor(0,35);
+    addChar("1");
 
     //Trellis
     pinMode(2, INPUT_PULLUP);
@@ -66,13 +66,11 @@ void loop(void) {
     delay(30);
     if (trellis.readSwitches()) {
       // go through every button
-      redraw = false;
       for (uint8_t i=0; i<16; i++) {
 //      if it was pressed, turn it on
         if (trellis.justPressed(i)) {
           trellis.setLED(i);
-          expression.concat(keymap[i]);
-          redraw = true;
+          addChar(keymap[i]);
         } 
 //      if it was released, turn it off
         if (trellis.justReleased(i)) {
@@ -81,22 +79,15 @@ void loop(void) {
       }
 //    tell the trellis to set the LEDs we requested
       trellis.writeDisplay();
-      if(redraw){
-        testText();
-      }
     }
 }
 
-void checkButtons() {
-}
-
-void testText() {
+void addChar(char* newChar) {
     int16_t  x1, y1, curx=50, cury=50;
     uint16_t w, h;
     tft.setTextColor(ILI9340_WHITE);  tft.setTextSize(1);
     
-    tft.getTextBounds(expression.c_str(), curx, cury, &x1, &y1, &w, &h);
+    tft.getTextBounds(newChar, tft.getCursorX(), tft.getCursorY(), &x1, &y1, &w, &h);
     tft.fillRect(x1, y1, w, h, ILI9340_BLACK);
-    tft.setCursor(50, 50);
-    tft.println(expression);
+    tft.print(newChar);
 }
