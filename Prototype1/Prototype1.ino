@@ -27,7 +27,8 @@ Adafruit_ILI9340 tft = Adafruit_ILI9340(_cs, _dc, _rst);
 Adafruit_Trellis matrix0 = Adafruit_Trellis();
 Adafruit_TrellisSet trellis =  Adafruit_TrellisSet(&matrix0);
 
-typedef float (*Operation)(void);
+#define MAX_DISPLAY_DECIMALS 5
+typedef double (*Operation)(void);
 char* charmap[] = {"7","8","9","/",
                   "4","5","6","x",
                   "1","2","3","-",
@@ -36,10 +37,13 @@ int digitmap[] = {7,8,9,0,
                   4,5,6,0,
                   1,2,3,0,
                   0};
-float a, b;
+double a, b;
 Operation op;
+int decimalPlace;
 
-char lastshown[15];
+int16_t  lastX, lastY;
+uint16_t lastW, lastH;
+char tmpStr[15];
 
 void setup() {
     Serial.begin(9600);
@@ -49,6 +53,7 @@ void setup() {
     tft.begin();
     tft.setRotation(1);
     tft.setFont(&FreeMono24pt7b);
+    tft.setTextColor(ILI9340_WHITE);
     tft.fillScreen(ILI9340_BLACK);
 
     //Trellis
@@ -95,43 +100,76 @@ void processClick(int key){
         case 3:  newOp = &divide; break;
         case 7:  newOp = &times;  break;
         case 11: newOp = &minus;  break;
+        case 13: decimalPlace = 1;  break;
         case 14: newOp = &eval;   break;
         case 15: newOp = &plus;   break;
         default: digit(key);
     }
     if(newOp){
         if(op){
-          int res=(op)();
+          double res=(op)();
           a=res;
-          show(res);
+          
+          //convert result for display
+          dtostrf(res, 1, MAX_DISPLAY_DECIMALS, tmpStr);
+          boolean hasDecimal = false, consec = true;
+          uint8_t trimSpot = strlen(tmpStr);
+          for(int i = strlen(tmpStr)-1; i >= 0; i--){
+              if(tmpStr[i] == '.'){
+                hasDecimal = true;
+              }
+              if(consec && tmpStr[i] == '0'){
+                trimSpot = i;
+              } else {
+                consec = false;
+              }
+          }
+          // Only trim if there's a decimal point in the number
+          if(hasDecimal){
+            if(tmpStr[trimSpot-1] == '.'){
+              // If the zeroes after the decimal edge right up against the decimal, trim off the decimal point too
+              tmpStr[trimSpot-1] = 0;
+            } else { 
+              // Otherwise just trim the zeroes
+              tmpStr[trimSpot] = 0;
+            }
+          }
+          show(tmpStr);
         } else {
           a=b;
         }
         op = newOp;
         b=0;
+        decimalPlace = 0;
     }
 }
 
-float divide(){ return a/b; }
-float times(){ return a*b; }
-float minus(){ return a-b; }
-float plus(){ return a+b; }
-float eval(){ return a; }  //unimplemented
+double divide(){ return a/b; }
+double times(){ return a*b; }
+double minus(){ return a-b; }
+double plus(){ return a+b; }
+double eval(){ return a; }  //unimplemented
 
 void digit(int key){
-    b=b*10+digitmap[key];
-    show(b);
+    if(decimalPlace != 0){
+        b+=digitmap[key]*pow(.1,decimalPlace);
+        show(dtostrf(b,1,decimalPlace,tmpStr));
+        decimalPlace++;
+    } else {
+        b=b*10+digitmap[key];
+        show(dtostrf(b,1,0,tmpStr));
+    }
 }
 
-void show(float num){
-    int16_t  x1, y1;
-    uint16_t w, h;
+void show(char* str){
     tft.setCursor(50, 50);
-    tft.getTextBounds(lastshown, 50, 50, &x1, &y1, &w, &h);
-    tft.fillRect(x1, y1, w, h, ILI9340_BLACK);
-    tft.println(num);
+//    tft.fillScreen(ILI9340_BLACK);
+
+    tft.fillRect(lastX, lastY, lastW, lastH, ILI9340_BLACK);
+//    dtostrf(num,1,decs,lastshown);
+    tft.println(str);
+    tft.getTextBounds(str, 50, 50, &lastX, &lastY, &lastW, &lastH);
     
-    dtostrf(num,1,2,lastshown);
 }
 
 void addChar(char* newChar) {
