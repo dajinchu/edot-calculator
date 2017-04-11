@@ -41,6 +41,8 @@ double a, b;
 Operation op;
 int decimalPlace;
 
+unsigned long eqDown;
+
 int16_t  lastX, lastY;
 uint16_t lastW, lastH;
 char tmpStr[15];
@@ -89,8 +91,16 @@ void loop(void) {
           trellis.clrLED(i);
         }
       }
+      if(trellis.justPressed(14)){
+        eqDown = millis();
+      }
 //    tell the trellis to set the LEDs we requested
       trellis.writeDisplay();
+    }
+    if(trellis.isKeyPressed(14) && millis()-eqDown>1000){
+        trellis.clrLED(14);
+        trellis.writeDisplay();
+        cls();
     }
 }
 
@@ -149,6 +159,7 @@ double times(){ return a*b; }
 double minus(){ return a-b; }
 double plus(){ return a+b; }
 double eval(){ return a; }  //unimplemented
+void cls(){ a=0; b=0; op = NULL; show(0); }
 
 void digit(int key){
     if(decimalPlace != 0){
