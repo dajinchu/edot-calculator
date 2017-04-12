@@ -176,9 +176,50 @@ void show(char* str){
     tft.setCursor(50, 50);
 //    tft.fillScreen(ILI9340_BLACK);
 
-    tft.fillRect(lastX, lastY, lastW, lastH, ILI9340_BLACK);
+    tft.fillRect(lastX, lastY, lastW + 100, lastH, ILI9340_BLACK);
 //    dtostrf(num,1,decs,lastshown);
-    tft.println(str);
+    char *period;
+    int index;
+    size_t str_length;
+    str_length = strlen(str);
+    period = strchr(str, '.');
+    index = (int) (period - str);
+    
+    if(index < 1){
+      tft.println(str);
+    } else{
+      String sub1;
+      for(int p = 0; p < index; p++){
+        sub1 = sub1 + str[p];
+      }
+      String sub2;
+      for(int p = index + 1; p < (int) str_length; p++){
+         sub2 = sub2 + str[p];
+      }
+      Serial.print("Sub 1:");
+      Serial.println(sub1);
+      Serial.print("Sub 2:");
+      Serial.println(sub2);
+      tft.setTextColor(ILI9340_WHITE);  tft.setTextSize(1);
+      tft.print(sub1);
+      tft.setTextColor(ILI9340_RED);  tft.setTextSize(2);
+      int16_t cursorX = tft.getCursorX() - 18;
+      int16_t cursorY = tft.getCursorY(); 
+      tft.setCursor(cursorX, cursorY);
+      tft.print('.');
+      cursorX = tft.getCursorX() - 18;
+      cursorY = tft.getCursorY(); 
+      tft.setCursor(cursorX, cursorY);
+      tft.setTextColor(ILI9340_WHITE);  tft.setTextSize(1);
+      tft.println(sub2);
+      
+    }
+
+    
+    
+    //Serial.println(index);
+    //Serial.println(str_length);
+    
     tft.getTextBounds(str, 50, 50, &lastX, &lastY, &lastW, &lastH);
     
 }
