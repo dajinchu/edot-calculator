@@ -7,4 +7,4 @@ EDot Calculator is a handheld calculator prototype that emphasizes the decimal p
 ![Special Education Calculator](sped-calcb.png)
 
 ## History
-We designed this calculator in association with a special needs teacher at Worcester Public Schools for kids with autism.
+We designed this calculator in association with a special needs teacher at Worcester Public Schools for kids with autism. Once we developed the hardware calculator, we developed a iOS version with the same purpose.
